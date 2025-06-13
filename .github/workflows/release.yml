@@ -34,23 +34,33 @@ jobs:
 
       - name: Generate changelog
         id: changelog
-        uses: metcalfc/changelog-generator@v4.6.2
-        with:
-          myToken: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Get all commit messages since last tag or a reasonable limit if this is the first tag
+          if git describe --tags --abbrev=0 HEAD^ 2>/dev/null; then
+            # If this is not the first tag, compare with the previous one
+            PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null)
+            echo "Getting changes between $PREVIOUS_TAG and ${{ github.ref_name }}"
+            CHANGELOG=$(git log --pretty=format:"* %s (%h)" $PREVIOUS_TAG..${{ github.ref_name }})
+          else
+            # If this is the first tag, just get the recent commits
+            echo "This appears to be the first tag, getting the last 20 commits"
+            CHANGELOG=$(git log -20 --pretty=format:"* %s (%h)")
+          fi
+          echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create Release
         id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ steps.get_version.outputs.VERSION }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          name: Release ${{ steps.get_version.outputs.VERSION }}
           body: |
             # VConSharp ${{ steps.get_version.outputs.VERSION }}
 
             ## Changes
-            ${{ steps.changelog.outputs.changelog }}
+            ${{ steps.changelog.outputs.CHANGELOG }}
 
             ## Installation
             ```
