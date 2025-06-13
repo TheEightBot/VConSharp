@@ -28,6 +28,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Github", "Github", "{D0FED5
 		.github\workflows\release.yml = .github\workflows\release.yml
 		.github\workflows\build-and-publish.yml = .github\workflows\build-and-publish.yml
 		.github\copilot-instructions.md = .github\copilot-instructions.md
+		.github\dependabot.yml = .github\dependabot.yml
 	EndProjectSection
 EndProject
 Global
