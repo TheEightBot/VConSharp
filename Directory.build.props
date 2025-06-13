@@ -6,10 +6,10 @@
     </PropertyGroup>
     <PropertyGroup>
         <PackageProjectUrl>https://eight.bot</PackageProjectUrl>
-        <RepositoryUrl>https://github.com/TheEightBot/AuroraControls.Maui</RepositoryUrl>
+        <RepositoryUrl>https://github.com/TheEightBot/VConSharp</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
-        <PackageTags>.NET MAUI;Custom Controls;SkiaSharp;Eight-Bot</PackageTags>
-        <Description>Custom user controls for the .NET MAUI platform</Description>
+        <PackageTags>VCon;Virtual Conversations</PackageTags>
+        <Description>A .NET library for creating and managing vCons (Virtual Conversations).</Description>
         <PackageIcon>logo.png</PackageIcon>
         <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
