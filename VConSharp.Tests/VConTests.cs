@@ -1,5 +1,3 @@
-using System.Text.Json;
-
 namespace VConSharp.Tests;
 
 public class VConTests
@@ -15,7 +13,7 @@ public class VConTests
         Assert.IsType<DateTime>(vcon.CreatedAt);
         Assert.IsType<DateTime>(vcon.UpdatedAt);
         Assert.Empty(vcon.Parties);
-        Assert.Empty(vcon.Dialogs);
+        Assert.Empty(vcon.Dialog);
         Assert.Empty(vcon.Attachments);
         Assert.Empty(vcon.Analysis);
         Assert.NotNull(vcon.Tags);
@@ -47,7 +45,7 @@ public class VConTests
         // Assert
         Assert.Equal(uuid, vcon.Uuid);
         Assert.Empty(vcon.Parties);
-        Assert.Empty(vcon.Dialogs);
+        Assert.Empty(vcon.Dialog);
     }
 
     [Fact]
@@ -68,9 +66,6 @@ public class VConTests
         Assert.Single(vcon.Parties);
         Assert.Equal("+1234567890", vcon.Parties[0].Tel);
         Assert.Equal("John Doe", vcon.Parties[0].Name);
-
-        var partyIndex = vcon.FindPartyIndex("tel", "+1234567890");
-        Assert.Equal(0, partyIndex);
     }
 
     [Fact]
@@ -81,7 +76,7 @@ public class VConTests
         var dialog = new Dialog(
             "text/plain",
             DateTime.UtcNow,
-            new[] { 0, 1 });
+            new[] { 0, 1, });
 
         dialog.Body = "Hello!";
 
@@ -89,12 +84,8 @@ public class VConTests
         vcon.AddDialog(dialog);
 
         // Assert
-        Assert.Single(vcon.Dialogs);
-        Assert.Equal("Hello!", vcon.Dialogs[0].Body);
-
-        var foundDialog = vcon.FindDialog("body", "Hello!");
-        Assert.NotNull(foundDialog);
-        Assert.Equal("Hello!", foundDialog.Body);
+        Assert.Single(vcon.Dialog);
+        Assert.Equal("Hello!", vcon.Dialog[0].Body);
     }
 
     [Fact]
@@ -156,7 +147,7 @@ public class VConTests
         vcon.AddTag("category", "support");
 
         // Assert
-        Assert.Equal(new Dictionary<string, string> { ["category"] = "support" }, vcon.Tags);
+        Assert.Equal(new Dictionary<string, string> { ["category"] = "support", }, vcon.Tags);
         Assert.Equal("support", vcon.GetTag("category"));
     }
 

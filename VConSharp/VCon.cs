@@ -1,5 +1,4 @@
 using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
@@ -18,135 +17,107 @@ public class VCon
     private readonly ILogger<VCon> _logger;
 
     /// <summary>
-    /// Gets or sets the data contained in the vCon.
+    /// Gets or sets the UUID of the vCon.
     /// </summary>
-    private VConData Data { get; set; }
+    [JsonPropertyName("uuid")]
+    public string? Uuid { get; set; }
 
     /// <summary>
-    /// Gets the UUID of the vCon.
+    /// Gets or sets the vCon specification version.
+    /// This is a required field when sending vCons to the API.
     /// </summary>
-    public string Uuid => Data.Uuid ?? string.Empty;
+    [JsonPropertyName("vcon")]
+    public string? Vcon { get; set; }
 
     /// <summary>
-    /// Gets the vCon specification version.
+    /// Gets or sets the subject of the vCon.
     /// </summary>
-    public string VconVersion => Data.Vcon ?? string.Empty;
+    [JsonPropertyName("subject")]
+    public string? Subject { get; set; }
 
     /// <summary>
-    /// Gets the subject of the vCon.
+    /// Gets or sets the creation time of the vCon.
     /// </summary>
-    public string? Subject => Data.Subject;
+    [JsonPropertyName("created_at")]
+    public DateTime? CreatedAt { get; set; }
 
     /// <summary>
-    /// Gets the creation time of the vCon.
+    /// Gets or sets the last update time of the vCon.
     /// </summary>
-    public DateTime CreatedAt => Data.CreatedAt ?? DateTime.UtcNow;
+    [JsonPropertyName("updated_at")]
+    public DateTime? UpdatedAt { get; set; }
 
     /// <summary>
-    /// Gets the last update time of the vCon.
+    /// Gets or sets redacted content in the vCon.
     /// </summary>
-    public DateTime UpdatedAt => Data.UpdatedAt ?? DateTime.UtcNow;
+    [JsonPropertyName("redacted")]
+    public Dictionary<string, object>? RedactedContent { get; set; }
 
     /// <summary>
-    /// Gets a value indicating whether gets whether the vCon has been redacted.
+    /// Gets or sets appended content in the vCon.
     /// </summary>
-    public bool Redacted => Data.Redacted ?? false;
+    [JsonPropertyName("appended")]
+    public Dictionary<string, object>? AppendedContent { get; set; }
 
     /// <summary>
-    /// Gets a value indicating whether gets whether the vCon has been appended.
+    /// Gets a value indicating whether the vCon has been redacted.
     /// </summary>
-    public bool Appended => Data.Appended ?? false;
+    [JsonIgnore]
+    public bool Redacted => RedactedContent != null && RedactedContent.Count > 0;
 
     /// <summary>
-    /// Gets the group of the vCon.
+    /// Gets a value indicating whether the vCon has been appended.
     /// </summary>
-    public string? Group => Data.Group;
+    [JsonIgnore]
+    public bool Appended => AppendedContent != null && AppendedContent.Count > 0;
 
     /// <summary>
-    /// Gets the metadata of the vCon.
+    /// Gets or sets the group of the vCon.
     /// </summary>
-    public Dictionary<string, object>? Meta => Data.Meta;
+    [JsonPropertyName("group")]
+    public List<string>? Group { get; set; }
 
     /// <summary>
-    /// Gets the parties in the vCon.
+    /// Gets or sets additional metadata for the vCon.
     /// </summary>
-    public List<Party> Parties => Data.Parties?.Select(p => new Party(p)).ToList() ?? new List<Party>();
+    [JsonPropertyName("meta")]
+    public Dictionary<string, object>? Meta { get; set; }
 
     /// <summary>
-    /// Gets the dialogs in the vCon.
+    /// Gets or sets the parties in the vCon.
     /// </summary>
-    public List<Dialog> Dialogs
-    {
-        get
-        {
-            if (Data.Dialog == null)
-            {
-                return new List<Dialog>();
-            }
+    [JsonPropertyName("parties")]
+    public List<Party>? Parties { get; set; }
 
-            var result = new List<Dialog>();
-            foreach (var d in Data.Dialog)
-            {
-                // Handle deserialized JSON data
-                if (d.TryGetValue("type", out var type) &&
-                    d.TryGetValue("start", out var startObj) &&
-                    d.TryGetValue("parties", out var partiesObj))
-                {
-                    try
-                    {
-                        var start = startObj is DateTime dt ? dt : DateTime.Parse(startObj.ToString() ?? string.Empty);
-                        var parties = new List<int>();
+    /// <summary>
+    /// Gets or sets the dialogs in the vCon.
+    /// </summary>
+    [JsonPropertyName("dialog")]
+    public List<Dialog>? Dialog { get; set; }
 
-                        // Handle array of parties
-                        if (partiesObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
-                        {
-                            foreach (var element in jsonElement.EnumerateArray())
-                            {
-                                parties.Add(element.GetInt32());
-                            }
-                        }
-                        else if (partiesObj is IEnumerable<object> objList)
-                        {
-                            foreach (var obj in objList)
-                            {
-                                if (obj is System.Text.Json.JsonElement elem)
-                                {
-                                    parties.Add(elem.GetInt32());
-                                }
-                                else
-                                {
-                                    parties.Add(Convert.ToInt32(obj));
-                                }
-                            }
-                        }
-                        else if (partiesObj is IEnumerable<int> intList)
-                        {
-                            parties.AddRange(intList);
-                        }
+    /// <summary>
+    /// Gets or sets the attachments in the vCon.
+    /// </summary>
+    [JsonPropertyName("attachments")]
+    public List<Attachment>? Attachments { get; set; }
 
-                        var dialog = new Dialog(type.ToString() ?? string.Empty, start, parties);
+    /// <summary>
+    /// Gets or sets the analysis in the vCon.
+    /// </summary>
+    [JsonPropertyName("analysis")]
+    public List<Analysis>? Analysis { get; set; }
 
-                        // Set other properties
-                        foreach (var prop in d)
-                        {
-                            if (prop.Key != "type" && prop.Key != "start" && prop.Key != "parties")
-                            {
-                                SetDialogProperty(dialog, prop.Key, prop.Value);
-                            }
-                        }
+    /// <summary>
+    /// Gets or sets the tags in the vCon.
+    /// </summary>
+    [JsonPropertyName("tags")]
+    public Dictionary<string, string>? Tags { get; set; }
 
-                        result.Add(dialog);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Error processing dialog");
-                    }
-                }
-            }
-
-            return result;
-        }
-    }
+    /// <summary>
+    /// Gets or sets the signatures in the vCon.
+    /// </summary>
+    [JsonPropertyName("signatures")]
+    public List<Signature>? Signatures { get; set; }
 
     private void SetDialogProperty(Dialog dialog, string key, object value)
     {
@@ -193,21 +164,6 @@ public class VCon
     }
 
     /// <summary>
-    /// Gets the attachments in the vCon.
-    /// </summary>
-    public List<Attachment> Attachments => Data.Attachments ?? new List<Attachment>();
-
-    /// <summary>
-    /// Gets the analysis in the vCon.
-    /// </summary>
-    public List<Analysis> Analysis => Data.Analysis ?? new List<Analysis>();
-
-    /// <summary>
-    /// Gets the tags in the vCon.
-    /// </summary>
-    public Dictionary<string, string>? Tags => Data.Tags;
-
-    /// <summary>
     /// Initializes a new instance of the <see cref="VCon"/> class.
     /// Creates a new instance of VCon.
     /// </summary>
@@ -216,29 +172,25 @@ public class VCon
     {
         _logger = logger ?? NullLoggerFactory.Instance.CreateLogger<VCon>();
 
-        Data = new VConData
-        {
-            Uuid = Guid.NewGuid().ToString(),
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow,
-            Parties = new List<Dictionary<string, object>>(),
-            Dialog = new List<Dictionary<string, object>>(),
-            Attachments = new List<Attachment>(),
-            Analysis = new List<Analysis>(),
-            Tags = new Dictionary<string, string>(),
-        };
+        Uuid = Guid.NewGuid().ToString();
+        Vcon = "1.0";  // Set the default vCon specification version (required by API)
+        CreatedAt = DateTime.UtcNow;
+        UpdatedAt = DateTime.UtcNow;
+        Parties = new List<Party>();
+        Dialog = new List<Dialog>();
+        Attachments = new List<Attachment>();
+        Analysis = new List<Analysis>();
+        Tags = new Dictionary<string, string>();
     }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VCon"/> class.
-    /// Creates a new instance of VCon with the specified data.
+    /// Parameterless constructor for JSON deserialization.
     /// </summary>
-    /// <param name="data">The VCon data.</param>
-    /// <param name="logger">The logger for the VCon instance.</param>
-    public VCon(VConData data, ILogger<VCon>? logger = null)
+    [JsonConstructor]
+    public VCon()
+        : this(null)
     {
-        _logger = logger ?? NullLoggerFactory.Instance.CreateLogger<VCon>();
-        Data = data;
     }
 
     /// <summary>
@@ -263,14 +215,14 @@ public class VCon
                 PropertyNameCaseInsensitive = true,
             };
 
-            var data = JsonSerializer.Deserialize<VConData>(jsonString, options);
+            var vcon = JsonSerializer.Deserialize<VCon>(jsonString, options);
 
-            if (data == null)
+            if (vcon == null)
             {
-                throw new JsonException("Failed to deserialize vCon data");
+                throw new JsonException("Failed to deserialize vCon");
             }
 
-            return new VCon(data, null);
+            return vcon;
         }
         catch (Exception ex)
         {
@@ -283,7 +235,7 @@ public class VCon
     /// </summary>
     public string? GetTag(string tagName)
     {
-        if (Data.Tags == null || !Data.Tags.TryGetValue(tagName, out var value))
+        if (Tags == null || !Tags.TryGetValue(tagName, out var value))
         {
             return null;
         }
@@ -296,9 +248,9 @@ public class VCon
     /// </summary>
     public void AddTag(string tagName, string tagValue)
     {
-        Data.Tags ??= new Dictionary<string, string>();
-        Data.Tags[tagName] = tagValue;
-        Data.UpdatedAt = DateTime.UtcNow;
+        Tags ??= new Dictionary<string, string>();
+        Tags[tagName] = tagValue;
+        UpdatedAt = DateTime.UtcNow;
     }
 
     /// <summary>
@@ -306,7 +258,7 @@ public class VCon
     /// </summary>
     public Attachment? FindAttachmentByType(string type)
     {
-        return Data.Attachments?.FirstOrDefault(a => a.Type == type);
+        return Attachments?.FirstOrDefault(a => a.Type == type);
     }
 
     /// <summary>
@@ -316,9 +268,9 @@ public class VCon
     {
         var attachment = new Attachment(type, body, encoding);
 
-        Data.Attachments ??= new List<Attachment>();
-        Data.Attachments.Add(attachment);
-        Data.UpdatedAt = DateTime.UtcNow;
+        Attachments ??= new List<Attachment>();
+        Attachments.Add(attachment);
+        UpdatedAt = DateTime.UtcNow;
 
         return attachment;
     }
@@ -328,7 +280,7 @@ public class VCon
     /// </summary>
     public Analysis? FindAnalysisByType(string type)
     {
-        return Data.Analysis?.FirstOrDefault(a => a.Type == type);
+        return Analysis?.FirstOrDefault(a => a.Type == type);
     }
 
     /// <summary>
@@ -380,9 +332,9 @@ public class VCon
             analysis.Extra = extraDict;
         }
 
-        Data.Analysis ??= new List<Analysis>();
-        Data.Analysis.Add(analysis);
-        Data.UpdatedAt = DateTime.UtcNow;
+        Analysis ??= new List<Analysis>();
+        Analysis.Add(analysis);
+        UpdatedAt = DateTime.UtcNow;
     }
 
     /// <summary>
@@ -390,44 +342,9 @@ public class VCon
     /// </summary>
     public void AddParty(Party party)
     {
-        Data.Parties ??= new List<Dictionary<string, object>>();
-        Data.Parties.Add(party.ToDict() as Dictionary<string, object>);
-        Data.UpdatedAt = DateTime.UtcNow;
-    }
-
-    /// <summary>
-    /// Finds a party index by a property value.
-    /// </summary>
-    public int? FindPartyIndex(string by, string val)
-    {
-        if (Data.Parties == null)
-        {
-            return null;
-        }
-
-        for (int i = 0; i < Data.Parties.Count; i++)
-        {
-            if (Data.Parties[i].TryGetValue(by, out var value) && value.ToString() == val)
-            {
-                return i;
-            }
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Finds a dialog by a property value.
-    /// </summary>
-    public Dialog? FindDialog(string by, object val)
-    {
-        if (Data.Dialog == null)
-        {
-            return null;
-        }
-
-        var dialog = Data.Dialog.FirstOrDefault(d => d.TryGetValue(by, out var value) && value.Equals(val));
-        return dialog != null ? new Dialog(dialog) : null;
+        Parties ??= new List<Party>();
+        Parties.Add(party);
+        UpdatedAt = DateTime.UtcNow;
     }
 
     /// <summary>
@@ -435,9 +352,9 @@ public class VCon
     /// </summary>
     public void AddDialog(Dialog dialog)
     {
-        Data.Dialog ??= new List<Dictionary<string, object>>();
-        Data.Dialog.Add(dialog.ToDict() as Dictionary<string, object>);
-        Data.UpdatedAt = DateTime.UtcNow;
+        Dialog ??= new List<Dialog>();
+        Dialog.Add(dialog);
+        UpdatedAt = DateTime.UtcNow;
     }
 
     /// <summary>
@@ -481,8 +398,8 @@ public class VCon
                 .TrimEnd('=');
 
             // Create signature object
-            Data.Signatures ??= new List<Signature>();
-            Data.Signatures.Add(new Signature
+            Signatures ??= new List<Signature>();
+            Signatures.Add(new Signature
             {
                 Header = new Dictionary<string, string>
                 {
@@ -507,14 +424,14 @@ public class VCon
     {
         try
         {
-            if (Data.Signatures == null || !Data.Signatures.Any())
+            if (Signatures == null || !Signatures.Any())
             {
                 Console.WriteLine("No signatures found to verify");
                 return false;
             }
 
             // Get the first signature
-            var signature = Data.Signatures[0];
+            var signature = Signatures[0];
 
             // Ensure we have a header with alg = RS256
             if (signature.Header == null || !signature.Header.TryGetValue("alg", out var alg) || alg != "RS256")
@@ -526,23 +443,20 @@ public class VCon
             // Create a new vCon without the signatures for verification
             var verificationVCon = new VCon(_logger)
             {
-                Data = new VConData
-                {
-                    Uuid = Data.Uuid,
-                    Vcon = Data.Vcon,
-                    Subject = Data.Subject,
-                    CreatedAt = Data.CreatedAt,
-                    UpdatedAt = Data.UpdatedAt,
-                    Redacted = Data.Redacted,
-                    Appended = Data.Appended,
-                    Group = Data.Group,
-                    Meta = Data.Meta,
-                    Parties = Data.Parties,
-                    Dialog = Data.Dialog,
-                    Attachments = Data.Attachments,
-                    Analysis = Data.Analysis,
-                    Tags = Data.Tags,
-                },
+                Uuid = Uuid,
+                Vcon = Vcon,
+                Subject = Subject,
+                CreatedAt = CreatedAt,
+                UpdatedAt = UpdatedAt,
+                RedactedContent = RedactedContent,
+                AppendedContent = AppendedContent,
+                Group = Group,
+                Meta = Meta,
+                Parties = Parties,
+                Dialog = Dialog,
+                Attachments = Attachments,
+                Analysis = Analysis,
+                Tags = Tags,
             };
 
             // Convert the vCon to a JSON string for verification
@@ -601,79 +515,79 @@ public class VCon
     {
         var dict = new Dictionary<string, object?>();
 
-        if (Data.Uuid != null)
+        if (Uuid != null)
         {
-            dict["uuid"] = Data.Uuid;
+            dict["uuid"] = Uuid;
         }
 
-        if (Data.Vcon != null)
+        if (Vcon != null)
         {
-            dict["vcon"] = Data.Vcon;
+            dict["vcon"] = Vcon;
         }
 
-        if (Data.Subject != null)
+        if (Subject != null)
         {
-            dict["subject"] = Data.Subject;
+            dict["subject"] = Subject;
         }
 
-        if (Data.CreatedAt != null)
+        if (CreatedAt != null)
         {
-            dict["created_at"] = Data.CreatedAt.Value.ToString("o");
+            dict["created_at"] = CreatedAt.Value.ToString("o");
         }
 
-        if (Data.UpdatedAt != null)
+        if (UpdatedAt != null)
         {
-            dict["updated_at"] = Data.UpdatedAt.Value.ToString("o");
+            dict["updated_at"] = UpdatedAt.Value.ToString("o");
         }
 
-        if (Data.Redacted != null)
+        if (RedactedContent != null)
         {
-            dict["redacted"] = Data.Redacted;
+            dict["redacted"] = RedactedContent;
         }
 
-        if (Data.Appended != null)
+        if (AppendedContent != null)
         {
-            dict["appended"] = Data.Appended;
+            dict["appended"] = AppendedContent;
         }
 
-        if (Data.Group != null)
+        if (Group != null)
         {
-            dict["group"] = Data.Group;
+            dict["group"] = Group;
         }
 
-        if (Data.Meta != null)
+        if (Meta != null)
         {
-            dict["meta"] = Data.Meta;
+            dict["meta"] = Meta;
         }
 
-        if (Data.Parties != null)
+        if (Parties != null)
         {
-            dict["parties"] = Data.Parties;
+            dict["parties"] = Parties;
         }
 
-        if (Data.Dialog != null)
+        if (Dialog != null)
         {
-            dict["dialog"] = Data.Dialog;
+            dict["dialog"] = Dialog;
         }
 
-        if (Data.Attachments != null)
+        if (Attachments != null)
         {
-            dict["attachments"] = Data.Attachments;
+            dict["attachments"] = Attachments;
         }
 
-        if (Data.Analysis != null)
+        if (Analysis != null)
         {
-            dict["analysis"] = Data.Analysis;
+            dict["analysis"] = Analysis;
         }
 
-        if (Data.Tags != null)
+        if (Tags != null)
         {
-            dict["tags"] = Data.Tags;
+            dict["tags"] = Tags;
         }
 
-        if (Data.Signatures != null)
+        if (Signatures != null)
         {
-            dict["signatures"] = Data.Signatures;
+            dict["signatures"] = Signatures;
         }
 
         return dict;
@@ -690,7 +604,7 @@ public class VCon
             WriteIndented = true,
         };
 
-        return JsonSerializer.Serialize(Data, options);
+        return JsonSerializer.Serialize(this, options);
     }
 
     /// <summary>
@@ -704,100 +618,4 @@ public class VCon
             .Replace('/', '_')
             .TrimEnd('=');
     }
-}
-
-/// <summary>
-/// Represents the data structure of a vCon.
-/// </summary>
-public class VConData
-{
-    /// <summary>
-    /// Gets or sets the UUID of the vCon.
-    /// </summary>
-    [JsonPropertyName("uuid")]
-    public string? Uuid { get; set; }
-
-    /// <summary>
-    /// Gets or sets the vCon specification version.
-    /// </summary>
-    [JsonPropertyName("vcon")]
-    public string? Vcon { get; set; }
-
-    /// <summary>
-    /// Gets or sets the subject of the vCon.
-    /// </summary>
-    [JsonPropertyName("subject")]
-    public string? Subject { get; set; }
-
-    /// <summary>
-    /// Gets or sets the creation time of the vCon.
-    /// </summary>
-    [JsonPropertyName("created_at")]
-    public DateTime? CreatedAt { get; set; }
-
-    /// <summary>
-    /// Gets or sets the last update time of the vCon.
-    /// </summary>
-    [JsonPropertyName("updated_at")]
-    public DateTime? UpdatedAt { get; set; }
-
-    /// <summary>
-    /// Gets or sets whether the vCon has been redacted.
-    /// </summary>
-    [JsonPropertyName("redacted")]
-    public bool? Redacted { get; set; }
-
-    /// <summary>
-    /// Gets or sets whether the vCon has been appended.
-    /// </summary>
-    [JsonPropertyName("appended")]
-    public bool? Appended { get; set; }
-
-    /// <summary>
-    /// Gets or sets the group of the vCon.
-    /// </summary>
-    [JsonPropertyName("group")]
-    public string? Group { get; set; }
-
-    /// <summary>
-    /// Gets or sets additional metadata for the vCon.
-    /// </summary>
-    [JsonPropertyName("meta")]
-    public Dictionary<string, object>? Meta { get; set; }
-
-    /// <summary>
-    /// Gets or sets the parties in the vCon.
-    /// </summary>
-    [JsonPropertyName("parties")]
-    public List<Dictionary<string, object>>? Parties { get; set; }
-
-    /// <summary>
-    /// Gets or sets the dialogs in the vCon.
-    /// </summary>
-    [JsonPropertyName("dialog")]
-    public List<Dictionary<string, object>>? Dialog { get; set; }
-
-    /// <summary>
-    /// Gets or sets the attachments in the vCon.
-    /// </summary>
-    [JsonPropertyName("attachments")]
-    public List<Attachment>? Attachments { get; set; }
-
-    /// <summary>
-    /// Gets or sets the analysis in the vCon.
-    /// </summary>
-    [JsonPropertyName("analysis")]
-    public List<Analysis>? Analysis { get; set; }
-
-    /// <summary>
-    /// Gets or sets the tags in the vCon.
-    /// </summary>
-    [JsonPropertyName("tags")]
-    public Dictionary<string, string>? Tags { get; set; }
-
-    /// <summary>
-    /// Gets or sets the signatures in the vCon.
-    /// </summary>
-    [JsonPropertyName("signatures")]
-    public List<Signature>? Signatures { get; set; }
 }

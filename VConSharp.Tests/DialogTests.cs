@@ -1,5 +1,3 @@
-using System.Text.Json;
-
 namespace VConSharp.Tests;
 
 public class DialogTests
@@ -11,17 +9,17 @@ public class DialogTests
         var start = DateTime.UtcNow;
 
         // Act
-        var dialog = new Dialog("text/plain", start, new[] { 0, 1 });
+        var dialog = new Dialog("text/plain", start, new[] { 0, 1, });
 
         // Assert
         Assert.Equal("text/plain", dialog.Type);
         Assert.Equal(start, dialog.Start);
-        Assert.Equal(new List<int> { 0, 1 }, dialog.Parties);
+        Assert.Equal(new List<int> { 0, 1, }, dialog.Parties);
 
         var dict = dialog.ToDict();
         Assert.Equal("text/plain", dict["type"]);
         Assert.Equal(start, dict["start"]);
-        Assert.Equal(new List<int> { 0, 1 }, dict["parties"]);
+        Assert.Equal(new List<int> { 0, 1, }, dict["parties"]);
     }
 
     [Fact]
@@ -32,7 +30,7 @@ public class DialogTests
         var partyHistory = new PartyHistory(0, "joined", start);
 
         // Act
-        var dialog = new Dialog("text/plain", start, new[] { 0, 1 })
+        var dialog = new Dialog("text/plain", start, new[] { 0, 1, })
         {
             Originator = 0,
             Mimetype = "text/plain",
@@ -43,7 +41,7 @@ public class DialogTests
             Alg = "sha256",
             Signature = "signature",
             Disposition = "inline",
-            PartyHistory = new List<PartyHistory> { partyHistory },
+            PartyHistory = new List<PartyHistory> { partyHistory, },
             Transferee = 1,
             Transferor = 0,
             TransferTarget = 2,
@@ -54,13 +52,13 @@ public class DialogTests
             Interaction = "call",
             Skill = "sales",
             Duration = 300,
-            Meta = new Dictionary<string, object> { ["key"] = "value" },
+            Meta = new Dictionary<string, object> { ["key"] = "value", },
         };
 
         // Assert
         Assert.Equal("text/plain", dialog.Type);
         Assert.Equal(start, dialog.Start);
-        Assert.Equal(new List<int> { 0, 1 }, dialog.Parties);
+        Assert.Equal(new List<int> { 0, 1, }, dialog.Parties);
         Assert.Equal(0, dialog.Originator);
         Assert.Equal("text/plain", dialog.Mimetype);
         Assert.Equal("conversation.txt", dialog.Filename);
@@ -88,7 +86,7 @@ public class DialogTests
     public void ShouldHandleExternalData()
     {
         // Arrange
-        var dialog = new Dialog("text/plain", DateTime.UtcNow, new[] { 0 });
+        var dialog = new Dialog("text/plain", DateTime.UtcNow, new[] { 0, });
 
         // Act
         dialog.AddExternalData(
@@ -110,7 +108,7 @@ public class DialogTests
     public void ShouldHandleInlineData()
     {
         // Arrange
-        var dialog = new Dialog("text/plain", DateTime.UtcNow, new[] { 0 });
+        var dialog = new Dialog("text/plain", DateTime.UtcNow, new[] { 0, });
 
         // Act
         dialog.AddInlineData(
@@ -131,7 +129,7 @@ public class DialogTests
     public void ShouldValidateMimeTypes()
     {
         // Arrange
-        var dialog = new Dialog("text/plain", DateTime.UtcNow, new[] { 0 });
+        var dialog = new Dialog("text/plain", DateTime.UtcNow, new[] { 0, });
 
         // Act & Assert
         Assert.Throws<ArgumentException>(() => dialog.AddExternalData(
@@ -149,7 +147,7 @@ public class DialogTests
     public void ShouldCheckContentTypes()
     {
         // Arrange
-        var dialog = new Dialog("text/plain", DateTime.UtcNow, new[] { 0 });
+        var dialog = new Dialog("text/plain", DateTime.UtcNow, new[] { 0, });
         dialog.Mimetype = "text/plain";
 
         // Act & Assert

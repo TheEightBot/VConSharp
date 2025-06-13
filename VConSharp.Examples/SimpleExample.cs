@@ -1,8 +1,6 @@
-using VConSharp;
-
 namespace VConSharp.Examples
 {
-    public class SimpleExample
+    public static class SimpleExample
     {
         public static void Run()
         {
@@ -34,7 +32,7 @@ namespace VConSharp.Examples
             var textDialog = new Dialog(
                 "text/plain",
                 DateTime.UtcNow,
-                new[] { 0, 1 });
+                new[] { 0, 1, });
 
             textDialog.Originator = 0;
             textDialog.Body = "Hello, I need help with my account.";
@@ -46,7 +44,7 @@ namespace VConSharp.Examples
             var responseDialog = new Dialog(
                 "text/plain",
                 DateTime.UtcNow.AddSeconds(1),
-                new[] { 0, 1 });
+                new[] { 0, 1, });
 
             responseDialog.Originator = 1;
             responseDialog.Body = "Hello John, how can I assist you today?";
@@ -64,7 +62,7 @@ namespace VConSharp.Examples
             vcon.AddAnalysis(new Dictionary<string, object>
             {
                 ["type"] = "sentiment",
-                ["dialog"] = new[] { 0, 1 }, // Analyze both dialogs
+                ["dialog"] = new[] { 0, 1, }, // Analyze both dialogs
                 ["vendor"] = "sentiment-analyzer",
                 ["body"] = new Dictionary<string, object>
                 {
@@ -85,7 +83,7 @@ namespace VConSharp.Examples
             var loadedVcon = VCon.BuildFromJson(json);
             Console.WriteLine($"Loaded vCon UUID: {loadedVcon.Uuid}");
             Console.WriteLine($"Loaded vCon parties: {loadedVcon.Parties.Count}");
-            Console.WriteLine($"Loaded vCon dialogs: {loadedVcon.Dialogs.Count}");
+            Console.WriteLine($"Loaded vCon dialogs: {loadedVcon.Dialog.Count}");
             Console.WriteLine($"Loaded vCon attachments: {loadedVcon.Attachments.Count}");
             Console.WriteLine($"Loaded vCon analysis: {loadedVcon.Analysis.Count}");
             Console.WriteLine($"Loaded vCon tags: {loadedVcon.GetTag("category")}, {loadedVcon.GetTag("priority")}");

@@ -47,7 +47,7 @@ public class PartyTests
             ["uuid"] = "test-uuid",
             ["role"] = "customer",
             ["contact_list"] = "contacts",
-            ["meta"] = new Dictionary<string, object> { ["key"] = "value" },
+            ["meta"] = new Dictionary<string, object> { ["key"] = "value", },
         });
 
         // Assert

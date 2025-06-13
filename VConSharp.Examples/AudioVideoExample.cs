@@ -1,5 +1,3 @@
-using VConSharp;
-
 namespace VConSharp.Examples
 {
     public class AudioVideoExample
@@ -34,7 +32,7 @@ namespace VConSharp.Examples
             var textDialog = new Dialog(
                 "text/plain",
                 DateTime.UtcNow,
-                new[] { 0, 1 });
+                new[] { 0, 1, });
 
             textDialog.Originator = 0;
             textDialog.Body = "I need to schedule a video call for technical support.";
@@ -46,7 +44,7 @@ namespace VConSharp.Examples
             var audioDialog = new Dialog(
                 "audio/wav",
                 DateTime.UtcNow.AddSeconds(1),
-                new[] { 0, 1 });
+                new[] { 0, 1, });
 
             audioDialog.Originator = 0;
             audioDialog.Mimetype = "audio/wav";
@@ -65,7 +63,7 @@ namespace VConSharp.Examples
             var videoDialog = new Dialog(
                 "video/mp4",
                 DateTime.UtcNow.AddSeconds(310),
-                new[] { 0, 1 });
+                new[] { 0, 1, });
 
             videoDialog.Originator = 1;
             videoDialog.Mimetype = "video/mp4";
@@ -92,9 +90,9 @@ namespace VConSharp.Examples
                     ["label"] = "positive",
                     ["segments"] = new[]
                     {
-                        new Dictionary<string, object> { ["start"] = 0, ["end"] = 60, ["score"] = 0.6, ["label"] = "neutral" },
-                        new Dictionary<string, object> { ["start"] = 60, ["end"] = 180, ["score"] = 0.8, ["label"] = "positive" },
-                        new Dictionary<string, object> { ["start"] = 180, ["end"] = 300, ["score"] = 0.7, ["label"] = "positive" },
+                        new Dictionary<string, object> { ["start"] = 0, ["end"] = 60, ["score"] = 0.6, ["label"] = "neutral", },
+                        new Dictionary<string, object> { ["start"] = 60, ["end"] = 180, ["score"] = 0.8, ["label"] = "positive", },
+                        new Dictionary<string, object> { ["start"] = 180, ["end"] = 300, ["score"] = 0.7, ["label"] = "positive", },
                     },
                 },
             });
@@ -107,7 +105,7 @@ namespace VConSharp.Examples
                 ["vendor"] = "content-analyzer",
                 ["body"] = new Dictionary<string, object>
                 {
-                    ["labels"] = new[] { "screen-sharing", "technical-support", "software-demo" },
+                    ["labels"] = new[] { "screen-sharing", "technical-support", "software-demo", },
                     ["confidence"] = 0.92,
                 },
             });
@@ -134,7 +132,7 @@ namespace VConSharp.Examples
             var loadedVcon = VCon.BuildFromJson(json);
             Console.WriteLine($"Loaded vCon UUID: {loadedVcon.Uuid}");
             Console.WriteLine($"Loaded vCon parties: {loadedVcon.Parties.Count}");
-            Console.WriteLine($"Loaded vCon dialogs: {loadedVcon.Dialogs.Count}");
+            Console.WriteLine($"Loaded vCon dialogs: {loadedVcon.Dialog.Count}");
             Console.WriteLine($"Loaded vCon analysis: {loadedVcon.Analysis.Count}");
             Console.WriteLine($"Loaded vCon tags: {string.Join(", ", loadedVcon.Tags!.Select(t => $"{t.Key}={t.Value}"))}");
         }
