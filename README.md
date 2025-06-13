@@ -2,7 +2,7 @@
 
 A .NET library for creating and managing vCons (Virtual Conversations).
 
-[![Build, Test and Publish](https://github.com/mstonis/VConSharp/actions/workflows/build-and-publish.yml/badge.svg)](https://github.com/mstonis/VConSharp/actions/workflows/build-and-publish.yml)
+[![Build, Test and Publish](https://github.com/mstonis/VConSharp/actions/workflows/build-and-publish.yml/badge.svg)](https://github.com/TheEightBot/VConSharp/actions/workflows/build-and-publish.yml)
 [![NuGet](https://img.shields.io/nuget/v/VConSharp.svg)](https://www.nuget.org/packages/VConSharp/)
 
 ## Overview
