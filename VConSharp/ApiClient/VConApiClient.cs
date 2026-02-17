@@ -83,7 +83,7 @@ public class VConApiClient : IVConApiClient
         try
         {
             _logger.LogDebug("Getting vCons UUIDs with parameters: {Parameters}", queryParams);
-            var response = await _httpClient.GetFromJsonAsync<List<string>>(requestUri, _jsonOptions, cancellationToken);
+            var response = await _httpClient.GetFromJsonAsync<List<string>>(requestUri, _jsonOptions, cancellationToken).ConfigureAwait(false);
             return response ?? new List<string>();
         }
         catch (Exception ex)
@@ -100,17 +100,16 @@ public class VConApiClient : IVConApiClient
         {
             _logger.LogDebug("Getting vCon with UUID: {UUID}", vconUuid);
             var requestUri = $"vcon/{vconUuid}";
-            var response = await _httpClient.GetAsync(requestUri, cancellationToken);
+            using var response = await _httpClient.GetAsync(requestUri, cancellationToken).ConfigureAwait(false);
 
             response.EnsureSuccessStatusCode();
 
             // Read the raw JSON first to inspect it
-            var rawJson = await response.Content.ReadAsStringAsync(cancellationToken);
-            _logger.LogInformation("Raw JSON response: {JSON}", rawJson);
+            using var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
 
             try
             {
-                var vconData = JsonSerializer.Deserialize<VCon>(rawJson, _jsonOptions);
+                var vconData = JsonSerializer.Deserialize<VCon>(stream, _jsonOptions);
                 return vconData;
             }
             catch (JsonException jsonEx)
@@ -143,7 +142,7 @@ public class VConApiClient : IVConApiClient
         try
         {
             _logger.LogDebug("Getting multiple vCons with UUIDs: {UUIDs}", string.Join(", ", uuidList));
-            var response = await _httpClient.GetFromJsonAsync<List<VCon>>(requestUri, _jsonOptions, cancellationToken);
+            var response = await _httpClient.GetFromJsonAsync<List<VCon>>(requestUri, _jsonOptions, cancellationToken).ConfigureAwait(false);
 
             return response?.Where(v => v != null).ToList() ?? new List<VCon>();
         }
@@ -168,19 +167,18 @@ public class VConApiClient : IVConApiClient
         try
         {
             _logger.LogDebug("Creating vCon with UUID: {UUID}", vcon.Uuid);
-            var vconJson = JsonSerializer.Serialize(vcon, _jsonOptions);
-            _logger.LogInformation("Sending vCon JSON: {JSON}", vconJson);
-            var response = await _httpClient.PostAsJsonAsync(requestUri, vcon, _jsonOptions, cancellationToken);
+
+            using var response = await _httpClient.PostAsJsonAsync(requestUri, vcon, _jsonOptions, cancellationToken).ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
             {
-                var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                var errorContent = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
                 _logger.LogError("API returned error {StatusCode}: {ErrorContent}", response.StatusCode, errorContent);
             }
 
             response.EnsureSuccessStatusCode();
 
-            var createdVCon = await response.Content.ReadFromJsonAsync<VCon>(_jsonOptions, cancellationToken);
+            var createdVCon = await response.Content.ReadFromJsonAsync<VCon>(_jsonOptions, cancellationToken).ConfigureAwait(false);
             return createdVCon!;
         }
         catch (Exception ex)
@@ -198,7 +196,7 @@ public class VConApiClient : IVConApiClient
         try
         {
             _logger.LogDebug("Deleting vCon with UUID: {UUID}", vconUuid);
-            var response = await _httpClient.DeleteAsync(requestUri, cancellationToken);
+            using var response = await _httpClient.DeleteAsync(requestUri, cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
         }
         catch (Exception ex)
@@ -238,7 +236,7 @@ public class VConApiClient : IVConApiClient
         try
         {
             _logger.LogDebug("Searching vCons with parameters: {Parameters}", queryParams);
-            var response = await _httpClient.GetFromJsonAsync<List<string>>(requestUri, _jsonOptions, cancellationToken);
+            var response = await _httpClient.GetFromJsonAsync<List<string>>(requestUri, _jsonOptions, cancellationToken).ConfigureAwait(false);
 
             return response?.Select(Guid.Parse).ToList() ?? new List<Guid>();
         }
@@ -258,7 +256,7 @@ public class VConApiClient : IVConApiClient
         try
         {
             _logger.LogDebug("Adding vCons to ingress list {IngressList}: {UUIDs}", ingressList, string.Join(", ", uuids));
-            var response = await _httpClient.PostAsJsonAsync(requestUri, uuids, _jsonOptions, cancellationToken);
+            using var response = await _httpClient.PostAsJsonAsync(requestUri, uuids, _jsonOptions, cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
         }
         catch (Exception ex)
@@ -284,7 +282,7 @@ public class VConApiClient : IVConApiClient
         try
         {
             _logger.LogDebug("Getting vCons from egress list {EgressList} with limit {Limit}", egressList, limit);
-            var response = await _httpClient.GetAsync(requestUri, cancellationToken);
+            using var response = await _httpClient.GetAsync(requestUri, cancellationToken).ConfigureAwait(false);
 
             if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
             {
@@ -293,8 +291,8 @@ public class VConApiClient : IVConApiClient
 
             response.EnsureSuccessStatusCode();
 
-            var content = await response.Content.ReadAsStringAsync(cancellationToken);
-            var results = JsonSerializer.Deserialize<List<string>>(content, _jsonOptions);
+            using var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+            var results = JsonSerializer.Deserialize<List<string>>(stream, _jsonOptions);
             return results ?? new List<string>();
         }
         catch (Exception ex)
@@ -312,10 +310,10 @@ public class VConApiClient : IVConApiClient
         try
         {
             _logger.LogDebug("Counting vCons in egress list {EgressList}", egressList);
-            var response = await _httpClient.GetAsync(requestUri, cancellationToken);
+            using var response = await _httpClient.GetAsync(requestUri, cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
-            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            using var content = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
             var result = JsonSerializer.Deserialize<Dictionary<string, int>>(content, _jsonOptions);
 
             return result?.FirstOrDefault().Value ?? 0;
@@ -333,10 +331,10 @@ public class VConApiClient : IVConApiClient
         try
         {
             _logger.LogDebug("Getting system configuration");
-            var response = await _httpClient.GetAsync("config", cancellationToken);
+            using var response = await _httpClient.GetAsync("config", cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
-            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            using var content = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
             var result = JsonSerializer.Deserialize<Dictionary<string, object>>(content, _jsonOptions);
             return result ?? new Dictionary<string, object>();
         }
@@ -353,7 +351,7 @@ public class VConApiClient : IVConApiClient
         try
         {
             _logger.LogDebug("Updating system configuration");
-            var response = await _httpClient.PostAsJsonAsync("config", config, _jsonOptions, cancellationToken);
+            using var response = await _httpClient.PostAsJsonAsync("config", config, _jsonOptions, cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
         }
         catch (Exception ex)
@@ -371,10 +369,10 @@ public class VConApiClient : IVConApiClient
         try
         {
             _logger.LogDebug("Getting DLQ contents for ingress list {IngressList}", ingressList);
-            var response = await _httpClient.GetAsync(requestUri, cancellationToken);
+            using var response = await _httpClient.GetAsync(requestUri, cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
-            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            using var content = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
             var result = JsonSerializer.Deserialize<Dictionary<string, object>>(content, _jsonOptions);
             return result ?? new Dictionary<string, object>();
         }
@@ -393,10 +391,10 @@ public class VConApiClient : IVConApiClient
         try
         {
             _logger.LogDebug("Reprocessing DLQ for ingress list {IngressList}", ingressList);
-            var response = await _httpClient.PostAsync(requestUri, null, cancellationToken);
+            using var response = await _httpClient.PostAsync(requestUri, null, cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
-            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            using var content = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
             var result = JsonSerializer.Deserialize<Dictionary<string, object>>(content, _jsonOptions);
             return result ?? new Dictionary<string, object>();
         }
@@ -413,10 +411,10 @@ public class VConApiClient : IVConApiClient
         try
         {
             _logger.LogDebug("Rebuilding search index");
-            var response = await _httpClient.GetAsync("index_vcons", cancellationToken);
+            using var response = await _httpClient.GetAsync("index_vcons", cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
-            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            using var content = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
             var result = JsonSerializer.Deserialize<Dictionary<string, object>>(content, _jsonOptions);
             return result ?? new Dictionary<string, object>();
         }

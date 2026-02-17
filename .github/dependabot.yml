@@ -6,7 +6,7 @@ updates:
     directory: '/'
     schedule:
       interval: 'weekly'
-      
+
   # Maintain dependencies for .NET
   - package-ecosystem: 'nuget'
     directory: '/'
@@ -14,7 +14,7 @@ updates:
       interval: 'weekly'
     open-pull-requests-limit: 10
     assignees:
-      - 'mstonis'
+      - 'michaelstonis'
     commit-message:
       prefix: 'deps'
       include: 'scope'
